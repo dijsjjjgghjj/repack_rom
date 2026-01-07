@@ -301,7 +301,7 @@ extract_rom() {
     if [ "$file" ]; then
         blue "[payload] 解包 payload.bin"
         #payload-dump tmp/extractRom/payload.bin tmp/extractRom >/dev/null 2>&1 || error "分解 [payload.bin] 时出错"
-        payload-dumper-go -c $(nproc) -o tmp/extractRom tmp/extractRom/payload.bin >/dev/null 2>&1 || error "分解 [payload.bin] 时出错"
+        payload-dumper-go -c $(nproc) -o tmp/extractRom tmp/extractRom/payload.bin > tmp/payload_dumper.log 2>&1 || (error "分解 [payload.bin] 时出错" && cat tmp/payload_dumper.log)
         rm -r tmp/extractRom/payload.bin
     fi
 
