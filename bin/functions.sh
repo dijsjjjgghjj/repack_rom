@@ -565,8 +565,8 @@ repack_img() {
     local name=$(basename "$input_file")
     local img_out="$input_file/../out/$name.img"
     local type
-    local fs="$input_file/../config/${name}_fs_config"
-    local file="$input_file/../config/${name}_file_contexts"
+    local fs_config="$input_file/../config/${name}_fs_config"
+    local file_contexts="$input_file/../config/${name}_file_contexts"
     local is=0
     local is1=0
     local i
@@ -600,12 +600,12 @@ repack_img() {
 
     blue "[$type] $input_file -> $name.img"
 
-    if [ -f "$fs" ] && [ -f "$file" ]; then
-        fspatch.py "$input_file" "$fs" >/dev/null 2>&1 || (
+    if [ -f "$fs_config" ] && [ -f "$file_contexts" ]; then
+        fspatch.py "$input_file" "$fs_config" >/dev/null 2>&1 || (
             error "fspatch error"
             exit 1
         )
-        contextpatch.py "$input_file" "$file" >/dev/null 2>&1 || (
+        contextpatch.py "$input_file" "$file_contexts" >/dev/null 2>&1 || (
             error "contextpatch error"
             exit 1
         )
@@ -619,7 +619,7 @@ repack_img() {
     UTC=$(date -u +%s)
 
     if [ "$type" = "erofs" ]; then
-        mkfs.erofs -zlz4hc,1 -T "$UTC" --mount-point="/$name" --fs-config-file="$fs" --file-contexts="$file" "$img_out" "$input_file" > "tmp/repack_img/$name.log" 2>&1 || (rm -rf "$img_out" ; cat "tmp/repack_img/$name.log")
+        mkfs.erofs -zlz4hc,1 -T "$UTC" --mount-point="/$name" --fs-config-file="$fs_config" --file-contexts="$file_contexts" "$img_out" "$input_file" > "tmp/repack_img/$name.log" 2>&1 || (rm -rf "$img_out" ; cat "tmp/repack_img/$name.log")
     elif [ "$type" = "ext" ]; then
         if [[ "$OSTYPE" == "darwin"* ]]; then
             size_now=$(find "$input_file" | xargs stat -f%z | awk ' {s+=$1} END { print s }')
@@ -633,11 +633,11 @@ repack_img() {
             if [ "$xx" = "30" ]; then
                 yellow "ext尝试第30次打包..."
                 mke2fs -O ^has_journal -L "$input_file" -I 256 -i 102400 -M "$mount_dir" -m 0 -t ext4 -b 4096 "$img_out" "$size"
-                e2fsdroid -e -T "$UTC" -C "$fs" -S "$file" -f "$input_file" -a "/$name" "$img_out" || rm -rf "$img_out"
+                e2fsdroid -e -T "$UTC" -C "$fs_config" -S "$file_contexts" -f "$input_file" -a "/$name" "$img_out" || rm -rf "$img_out"
                 break
             fi
             mke2fs -O ^has_journal -L "$input_file" -I 256 -i 102400 -M "$mount_dir" -m 0 -t ext4 -b 4096 "$img_out" "$size" >/dev/null 2>&1
-            e2fsdroid -e -T "$UTC" -C "$fs" -S "$file" -f "$input_file" -a "/$name" "$img_out" >/dev/null 2>&1 || rm -rf "$img_out"
+            e2fsdroid -e -T "$UTC" -C "$fs_config" -S "$file_contexts" -f "$input_file" -a "/$name" "$img_out" >/dev/null 2>&1 || rm -rf "$img_out"
             if [ ! -f "$img_out" ]; then
                 size=$(("$size" + 1024))
                 xx=$(("$xx" + 1))
