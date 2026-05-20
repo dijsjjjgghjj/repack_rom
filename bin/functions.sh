@@ -630,8 +630,8 @@ repack_img() {
         size="$(("$size_now" / 4096))"
         xx=0
         while true; do
-            if [ "$xx" = "30" ]; then
-                yellow "ext尝试第30次打包..."
+            if [ "$xx" = "60" ]; then
+                yellow "ext尝试第60次打包..."
                 mke2fs -O ^has_journal -L "$input_file" -I 256 -i 102400 -M "$mount_dir" -m 0 -t ext4 -b 4096 "$img_out" "$size"
                 e2fsdroid -e -T "$UTC" -C "$fs_config" -S "$file_contexts" -f "$input_file" -a "/$name" "$img_out" || rm -rf "$img_out"
                 break
